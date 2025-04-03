@@ -1,0 +1,12 @@
+## Interface: 100105
+## Title: SavedInstances
+## Author: kubrick
+## Version: 1.0
+## Notes: 角色装等与副本CD追踪
+## SavedVariables: SavedInstancesDB
+libs\LibStub.lua
+libs\LibDataBroker-1.1.lua
+Utils.lua
+Data.lua
+SavedInstances.lua
+Gui.lua
