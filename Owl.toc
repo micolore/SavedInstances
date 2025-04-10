@@ -1,0 +1,10 @@
+## Interface: 100105
+## Title: Owl
+## Author: kubrick
+## Version: 1.0
+## Notes: 角色装等与副本CD追踪
+## SavedVariables: OwlSavedInstancesDB
+Utils.lua
+Data.lua
+Owl.lua
+Gui.lua

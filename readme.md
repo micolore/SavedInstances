@@ -1,5 +1,12 @@
 # shua
 
+## todo
+
+* 展示修复的宝匣钥匙数量 ok
+* 展示地下堡的次数（丰腴未知）o 
+* 展示本周是否获取过藏宝图，剩余藏宝图数量。
+* 记录每个角色的游戏时间（每周维度、总数）
+
 ## 功能点
 角色、装等、副本cd（xxxx、xxxx）、钥匙、箱子（本周开的次数）
 
@@ -14,37 +21,33 @@ https://wowpedia.fandom.com/wiki/API_C_CurrencyInfo.GetCurrencyInfo
 * 中文
 https://luntan.turtle-wow.org/viewtopic.php?t=663
 
+* logo
+https://www.ailogoeasy.com/zh#generate-favicon
+
 ### 一些 api
 GetItemCount(itemID, "itemName", or "itemLink", [includeBank]) - 返回当前制定的物品在你背包中的数量  
 GetItemInfo(itemId or "itemString") - Returns information about an item.  
-https://warcraft.wiki.gg/wiki/API_GetMoney
+https://warcraft.wiki.gg/wiki/API_GetMoney  
 https://warcraft.wiki.gg/wiki/API_GetInstanceLockTimeRemaining  
 https://warcraft.wiki.gg/wiki/API_GetNumSavedInstances 返回锁定的副本？？为什么需要index而不是id？？？
 https://warcraft.wiki.gg/wiki/API_GetSavedInstanceInfo  
 https://warcraft.wiki.gg/wiki/API_GetInstanceInfo 当前副本  
-https://warcraft.wiki.gg/wiki/API_GetContainerItemInfo
-https://warcraft.wiki.gg/wiki/World_of_Warcraft:_The_War_Within 地心之战
-https://warcraft.wiki.gg/wiki/API_GetCurrencyInfo 老版本的获货币的api
-https://warcraft.wiki.gg/wiki/Category:Numeric_IDs 所有id的分类
-https://warcraft.wiki.gg/wiki/CurrencyID 老版本的货币id（有新api） 
-https://warcraft.wiki.gg/wiki/InstanceID 副本id
-https://warcraft.wiki.gg/wiki/DifficultyID 副本等级id（普通）
+https://warcraft.wiki.gg/wiki/API_GetContainerItemInfo  
+https://warcraft.wiki.gg/wiki/World_of_Warcraft:_The_War_Within 地心之战  
+https://warcraft.wiki.gg/wiki/API_GetCurrencyInfo 老版本的获货币的api  
+https://warcraft.wiki.gg/wiki/Category:Numeric_IDs 所有id的分类  
+https://warcraft.wiki.gg/wiki/CurrencyID 老版本的货币id（有新api）   
+https://warcraft.wiki.gg/wiki/InstanceID 副本id  
+https://warcraft.wiki.gg/wiki/DifficultyID 副本等级id（普通）  
 
 ## 副本id
 -- 在游戏中输入以下命令获取最新副本ID
-/run for i=1,1000 do local n=GetRealZoneText(i) if n and strfind(n,"阿梅达希尔") then print(i,n) end end
+/run for i=1,1000 do local n=GetRealZoneText(i) if n and strfind(n,"阿梅达希尔") then print(i,n) end end  
 
-/run local i,n,d=GetInstanceInfo() print(format("ID:%d 名称:%s 难度:%d",i,n,d))
+/run local i,n,d=GetInstanceInfo() print(format("ID:%d 名称:%s 难度:%d",i,n,d))  
 
-## todo
-
-* 展示修复的宝匣钥匙数量 ok
-* 展示地下堡的次数（丰腴未知）o 
-* 展示本周是否获取过藏宝图，剩余藏宝图数量。
-* 记录每个角色的游戏时间（每周维度、总数）
 
 ## lua 
-
 
 * 打印数据
  --DEFAULT_CHAT_FRAME:AddMessage("1-instanceId:" .. tostring(id) .. " name:" .. tostring(name) .. " locked:" .. locked )

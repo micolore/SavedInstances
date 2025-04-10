@@ -2,7 +2,7 @@ function ShowCharacterRoster()
     local sortedChars = Utils.GetCharactersSortedByIlevel()
 
     local frame = CreateFrame("Frame", nil, UIParent, "BasicFrameTemplate")
-    frame:SetSize(600, 400)
+    frame:SetSize(700, 500)
     frame:SetPoint("CENTER")
 
     -- 允许拖动（关键设置）
@@ -39,7 +39,8 @@ function ShowCharacterRoster()
     local headers = {
         { text = "角色", width = 200, align = "CENTER", padding = 5 },
         { text = "装等", width = 60, align = "CENTER", padding = 0 },
-        { text = "钥匙", width = 60, align = "CENTER", padding = 0 },
+        { text = "宝匣钥匙", width = 80, align = "CENTER", padding = 0 },
+        { text = "宏伟宝库", width = 80, align = "CENTER", padding = 0 },
         { text = "阿梅达希尔", width = 200, align = "CENTER", padding = 0 }
     }
     
@@ -56,7 +57,10 @@ function ShowCharacterRoster()
     
     local offsetY = -40
     for _, charInfo in ipairs(sortedChars) do
+        
         local charData = charInfo.data
+        --DEFAULT_CHAT_FRAME:AddMessage("ResetWeeklyData exec..." .. charData.class)
+
         local classColor = RAID_CLASS_COLORS[charData.class]
         local nameText = content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         nameText:SetPoint("TOPLEFT", content, "TOPLEFT", 10, offsetY)
@@ -67,7 +71,7 @@ function ShowCharacterRoster()
         
         local ilvlText = content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         ilvlText:SetPoint("LEFT", nameText, "RIGHT", 5, 0)
-        ilvlText:SetText(format("%.1f", charData.ilevel))
+        ilvlText:SetText(string.format("%d", charData.ilevel or 0))
         ilvlText:SetSize(headers[2].width, 20)
 
         local bunkerKeyCountText = content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -76,19 +80,29 @@ function ShowCharacterRoster()
         local keyColor = bunkerKeyCount > 5 and "|cffff0000" or "|cffffffff"  -- 大于5=红色，否则白色
         bunkerKeyCountText:SetText(format("%s%d|r", keyColor, bunkerKeyCount))
         bunkerKeyCountText:SetSize(headers[3].width, 20)
+
+        local weekWorldActivitieText = content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        weekWorldActivitieText:SetPoint("LEFT", bunkerKeyCountText, "RIGHT", 5, 0)
+        local weekRaidProgress = charData.weekRaidProgress or 0
+        local weekActivitiesProgress = charData.weekActivitiesProgress or 0
+        local weekWorldProgress = charData.weekWorldProgress or 0
+        local progressString = string.format("%d/%d/%d", weekRaidProgress, weekActivitiesProgress, weekWorldProgress)
+        weekWorldActivitieText:SetText(progressString)
+        weekWorldActivitieText:SetSize(headers[4].width, 20)
         
-        local instanceCol = headers[1].width + headers[2].width + headers[3].width
+        local instanceCol = headers[1].width + headers[2].width + headers[3].width +headers[4].width
 
         for i, instanceName in ipairs(InstanceList) do
             local status = content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
             status:SetPoint("LEFT", nameText, "LEFT", instanceCol + (i-1)*(headers[4].width + 5), 0)
-            status:SetSize(headers[4].width, 20)
+            status:SetSize(headers[5].width, 20)
             status:SetJustifyH("CENTER")
             if charData and charData.instances and charData.instances[instanceName] then
                 local inst = charData.instances[instanceName]
-                local color = inst.locked and "|cffff0000锁定|r" or "|cff00ff00可打|r"
-                local reset = date("%m-%d", inst.resetTime or 0)  -- 处理 resetTime 为 nil 的情况
-                status:SetText(format("%s %s", color, reset))
+                -- DEFAULT_CHAT_FRAME:AddMessage("ResetWeeklyData exec..." .. tostring(inst.locked) .. charData.name)
+                local color = inst.locked and "|cffff0000已打|r" or "|cff00ff00可打|r"
+                --local reset = date("%Y-%m-%d", inst.resetTime or 0)  -- 处理 resetTime 为 nil 的情况
+                status:SetText(format("%s", color))
             else
                 status:SetText("|cffaaaaaa未知|r")
             end
@@ -108,13 +122,17 @@ SlashCmdList["ROSTER"] = ShowCharacterRoster
 local minimapButton = CreateFrame("Button", "MyAddonMinimapButton", Minimap, "UIPanelButtonTemplate")
 minimapButton:SetSize(25, 25)
 minimapButton:SetPoint("TOPLEFT", Minimap, "TOPLEFT", 0, 0)
-minimapButton:SetText("7")
+
+local icon = minimapButton:CreateTexture(nil, "ARTWORK")
+icon:SetTexture("Interface\\AddOns\\Owl\\owl3.tga")
+icon:SetSize(20, 20)
+icon:SetPoint("CENTER")
+icon:SetBlendMode("BLEND")  -- 启用透明
+icon:SetVertexColor(1, 1, 1)  -- 确保不偏色
+
 
 -- 设置按钮的正常、高亮和按下纹理
-minimapButton:SetNormalTexture("Interface\\Minimap\\UI-Minimap-Background")
-minimapButton:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square")
-minimapButton:SetPushedTexture("Interface\\Buttons\\UI-Button-Down")
-
+minimapButton:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
 -- 设置按钮的点击事件
 minimapButton:SetScript("OnClick", function()
     ShowCharacterRoster()
