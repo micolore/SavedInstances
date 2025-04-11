@@ -186,3 +186,27 @@ function Utils.IsUserNewWeekFirstLogin()
         return true
     end
 end
+
+function Utils.CheckAndPrintInstanceDifficulty()
+    local inInstance, instanceType = IsInInstance()
+
+    local TRACKED_INSTANCE_NAME = "阿梅达希尔，梦境之愿"
+
+    if inInstance and (instanceType == "party" or instanceType == "raid") then
+        local name, _, difficultyID, _, _, _, _, instanceID = GetInstanceInfo()
+
+        if name ~= TRACKED_INSTANCE_NAME then return end
+        
+        local difficultyName = DIFFICULTY_NAMES[difficultyID] or "未知难度"
+        
+        local message = format("|cFF00CCFF[%s]|r 你已进入 |cFFFFD100%s|r - |cFF00FF00%s|r (难度ID: %d)", 
+        addonTitle, name, difficultyName, difficultyID)
+
+        if IsInRaid() then
+            SendChatMessage(message, "RAID")
+        else
+            DEFAULT_CHAT_FRAME:AddMessage(message)
+        end
+        
+    end
+end

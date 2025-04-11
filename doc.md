@@ -6,23 +6,22 @@
 ## 参考
 
 * 依赖包
- https://www.wowace.com  
+  https://www.wowace.com  
 
 * api 
-https://wowpedia.fandom.com/wiki/API_C_CurrencyInfo.GetCurrencyInfo  
+  https://wowpedia.fandom.com/wiki/API_C_CurrencyInfo.GetCurrencyInfo  
 
 * 中文
-https://luntan.turtle-wow.org/viewtopic.php?t=663
+  https://luntan.turtle-wow.org/viewtopic.php?t=663
 
 * logo
-https://www.ailogoeasy.com/zh#generate-favicon
+  https://www.ailogoeasy.com/zh#generate-favicon
 
 ### 一些 api
-GetItemCount(itemID, "itemName", or "itemLink", [includeBank]) - 返回当前制定的物品在你背包中的数量  
-GetItemInfo(itemId or "itemString") - Returns information about an item.  
-https://warcraft.wiki.gg/wiki/API_GetMoney  
+
+https://warcraft.wiki.gg/wiki/API_GetMoney  获取金币
 https://warcraft.wiki.gg/wiki/API_GetInstanceLockTimeRemaining  
-https://warcraft.wiki.gg/wiki/API_GetNumSavedInstances 返回锁定的副本？？为什么需要index而不是id？？？
+https://warcraft.wiki.gg/wiki/API_GetNumSavedInstances 返回锁定的副本？？为什么需要index而不是id？？？  
 https://warcraft.wiki.gg/wiki/API_GetSavedInstanceInfo  
 https://warcraft.wiki.gg/wiki/API_GetInstanceInfo 当前副本  
 https://warcraft.wiki.gg/wiki/API_GetContainerItemInfo  
@@ -39,24 +38,28 @@ https://warcraft.wiki.gg/wiki/DifficultyID 副本等级id（普通）
 
 /run local i,n,d=GetInstanceInfo() print(format("ID:%d 名称:%s 难度:%d",i,n,d))  
 
-
 ## lua 
 
 * 打印数据
- --DEFAULT_CHAT_FRAME:AddMessage("1-instanceId:" .. tostring(id) .. " name:" .. tostring(name) .. " locked:" .. locked )
+ --DEFAULT_CHAT_FRAME:AddMessage("test:" .. tostring(id) .. " name:" .. tostring(name) .. " locked:" .. locked )
 
-## 地下堡
+### 参考插件
 
-https://www.curseforge.com/wow/addons/zamestotv-delves-all-sturdy-chest 插件1
+* https://www.curseforge.com/wow/addons/zamestotv-delves-all-sturdy-chest 
 
--- Check if weekly reward for delves is full (Level 8) 进度检查
+### 插件代码片段
+
+* Check if weekly reward for delves is full (Level 8) 进度检查  
+```
 function ZDH_GlobalScripting:IsWeeklyRewardForDelvesFull()
     local worldActivitiesRewards = C_WeeklyRewards.GetActivities(Enum.WeeklyRewardChestThresholdType.World)
     local bestReward = worldActivitiesRewards[3]
     return bestReward and bestReward.level == 8 or false
 end
+```
 
--- Delve Progress Functions 完成次数（宝库有三个等级，代码看明白了。）
+* Delve Progress Functions 完成次数（宝库有三个等级，代码看明白了。）  
+```
 local function GetLevel8DelvesDoneCount()
     local worldActivities = C_WeeklyRewards.GetActivities(Enum.WeeklyRewardChestThresholdType.World)
     for i = 2, 1, -1 do
@@ -67,16 +70,20 @@ local function GetLevel8DelvesDoneCount()
     end
     return "?"
 end
+```
 
--- Key Tracking Functions 获取宝匣钥匙数量（跟我写的有点不一样
+* Key Tracking Functions 获取宝匣钥匙数量（跟我写的有点不一样  
+```
 local function GetKeyNumber()
     local keys = "|T4622270:20|t Keys: "
     local keyInfos = C_CurrencyInfo.GetCurrencyInfo(3028) -- Delve Key Currency ID
     keys = keys .. (keyInfos.quantity == 0 and "|cFFFF0000" or "") .. keyInfos.quantity .. "|r"
     return keys
 end
+```
 
--- 本周获得的钥匙数量 下面id应该是世界任务完成的标识
+* 本周获得的钥匙数量 下面id应该是世界任务完成的标识  
+```
 local function GetKeyFlags()
     local keysQuestIDs = {84736, 84737, 84738, 84739}
     local keysObtained = 0
@@ -88,8 +95,10 @@ local function GetKeyFlags()
     local keyFlags = "Keys this week: " .. keysObtained .. "/4"
     return keyFlags, keysObtained
 end
+```
 
--- Delve List Management 所有的丰腴地下堡list
+* Delve List Management 所有的丰腴地下堡list  
+```
 local DelvesBountifulList = {
     Zones = {
         ["Isle of Dorn"] = { uiMapID = 2248, delves = {{id = 7787, name = "Earthcrawl Mines"}, {id = 7781, name = "Kriegval's Rest"}, {id = 7779, name = "Fungal Folly"}} },
@@ -99,7 +108,10 @@ local DelvesBountifulList = {
         ["Undermine"] = { uiMapID = 2346, delves = {{id = 8246, name = "Sidestreet Sluice"}} },		
     }
 }
+```
 
+* 获取地图（level3）  
+```
 function DelvesBountifulList:GetMapAtZoneLevel3(uiMapID)
     local mapInfo = C_Map.GetMapInfo(uiMapID)
     if mapInfo.mapType > 3 and mapInfo.parentMapID > 0 then
@@ -107,7 +119,10 @@ function DelvesBountifulList:GetMapAtZoneLevel3(uiMapID)
     end
     return uiMapID
 end
+```
 
+* 获取丰腴地下堡list  
+```
 function DelvesBountifulList:GetBountifulDelves()
     local bountifulDelves, addedDelves = {}, {}
     for _, zoneData in pairs(self.Zones) do
@@ -123,37 +138,23 @@ function DelvesBountifulList:GetBountifulDelves()
     end
     return bountifulDelves
 end
+```
 
--- 应该是世界任务完成之后的钥匙数量+1了
-local function UpdateKeyCount()
-    local keys = 0
-    if C_QuestLog.IsQuestFlaggedCompleted(84736) then keys = keys + 1 end
-    if C_QuestLog.IsQuestFlaggedCompleted(84737) then keys = keys + 1 end
-    if C_QuestLog.IsQuestFlaggedCompleted(84738) then keys = keys + 1 end
-    if C_QuestLog.IsQuestFlaggedCompleted(84739) then keys = keys + 1 end
-    frame.text:SetText(keys .. "/4")
-end
-
-local function GetCurrentWeek()
-    return math.floor((time() / 86400) / 7)  -- 获取当前的"周数"
-end
-
-local function ResetWeeklyData()
-    local currentWeek = GetCurrentWeek()
-    if SavedItemTrackerDB.lastWeek ~= currentWeek then
-        SavedItemTrackerDB.weeklyCount = 0  -- 新的一周，重置计数
-        SavedItemTrackerDB.lastWeek = currentWeek
+* 应该是世界任务完成之后的钥匙数量+1了  
+```
+    local function UpdateKeyCount()
+        local keys = 0
+        if C_QuestLog.IsQuestFlaggedCompleted(84736) then keys = keys + 1 end
+        if C_QuestLog.IsQuestFlaggedCompleted(84737) then keys = keys + 1 end
+        if C_QuestLog.IsQuestFlaggedCompleted(84738) then keys = keys + 1 end
+        if C_QuestLog.IsQuestFlaggedCompleted(84739) then keys = keys + 1 end
+        frame.text:SetText(keys .. "/4")
     end
-end
+```
 
-local function OnItemLooted(self, event, ...)
-    local itemID_looted = ...
-    if itemID_looted == itemID then
-        SavedItemTrackerDB.weeklyCount = (SavedItemTrackerDB.weeklyCount or 0) + 1
-    end
-end
-
+```
 local function GetWeeklyItemCount()
     ResetWeeklyData()
     return SavedItemTrackerDB.weeklyCount or 0
 end
+```
