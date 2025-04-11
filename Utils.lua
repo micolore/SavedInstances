@@ -73,17 +73,25 @@ function Utils.GetCurrencyAmount(currencyID)
 end
 
 function Utils.GetCurrentWeekStart()
-    -- 获取当前时间
-    local currentTime = time()
+    -- 获取当前时间（服务器时间）
+    local currentTime = GetServerTime()  -- 使用魔兽API获取服务器时间，避免本地时区问题
+    local serverDate = date("*t", currentTime)  -- 转换为日期表
     
-    -- 计算当前是周几（1=周日, 2=周一...7=周六）
-    local weekday = tonumber(date("%w", currentTime))  -- %w 返回0-6（0=周日）
-    weekday = (weekday == 0) and 7 or weekday  -- 转换为1-7格式
+    -- 计算到本周四的天数差（周四=5）
+    local daysToThursday = (5 - serverDate.wday) % 7  -- wday范围：1（周日）到7（周六）
     
-    -- 计算本周四00:00的时间戳（魔兽世界每周重置时间是周四）
-    local secondsSinceThursday = (weekday >= 5) and (weekday - 5) * 86400 
-                               or (weekday + 2) * 86400
-    return currentTime - secondsSinceThursday - (currentTime % 86400)
+    -- 计算本周四7:00的时间戳
+    local thursdayTime = currentTime - 
+                        (serverDate.hour * 3600 + serverDate.min * 60 + serverDate.sec) -  -- 减去当天已过时间
+                        daysToThursday * 86400 +                                           -- 减去到周四的天数
+                        7 * 3600  -- 加上7小时（7:00 AM）
+    
+    -- 如果当前时间已过本周四7:00，则返回本周四；否则返回上周四
+    if currentTime >= thursdayTime then
+        return thursdayTime
+    else
+        return thursdayTime - 604800  -- 减去7天
+    end
 end
 
 function Utils.GetLevel8DelvesDoneCount()
@@ -136,4 +144,45 @@ function Utils:IsWeeklyRewardForDelvesFull()
     local worldActivitiesRewards = C_WeeklyRewards.GetActivities(Enum.WeeklyRewardChestThresholdType.World)
     local bestReward = worldActivitiesRewards[3]
     return bestReward and bestReward.level == 8 or false
+end
+
+-- 是否新的一周第一次登陆（任意角色）
+function Utils.IsNewWeekFirstLogin()
+    local currentWeekStart = Utils.GetCurrentWeekStart()
+
+    if not OwlSavedInstancesDB.weeklyStart then
+        OwlSavedInstancesDB.weekFirstLogin = currentWeekStart;
+    end
+
+    local SECONDS_PER_WEEK = 7 * 24 * 60 * 60 
+    local currentTime = time()
+
+    -- 记录的首次登录时间加一周时间如果大于当前时间，说明是当前周登录过了，否则就是没登录过。
+    if currentTime < OwlSavedInstancesDB.weekFirstLogin + SECONDS_PER_WEEK then
+        return false
+    else
+        OwlSavedInstancesDB.weekFirstLogin = currentWeekStart
+        return true
+    end
+end
+
+-- 当前角色是否首次登录
+function Utils.IsUserNewWeekFirstLogin()
+    local character = GetCharacterData()
+    
+    local currentWeekStart = Utils.GetCurrentWeekStart()
+
+    if not character.weekFirstLogin then
+        character.weekFirstLogin = currentWeekStart;
+        return true
+    end
+    local SECONDS_PER_WEEK = 7 * 24 * 60 * 60 
+    local currentTime = time()
+
+    if currentTime < character.weekFirstLogin + SECONDS_PER_WEEK then
+        return false
+    else
+        character.weekFirstLogin = currentWeekStart
+        return true
+    end
 end

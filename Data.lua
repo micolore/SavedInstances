@@ -3,6 +3,7 @@ local INS_AMDXE= "阿梅达希尔，梦境之愿"
 InstanceList = {INS_AMDXE}
 
 OwlSavedInstancesDB = {
+    weekFirstLogin = nil,
     config = {
         trackedInstances = {
             [2547] = true,
@@ -20,6 +21,7 @@ OwlSavedInstancesDB = {
             weekRaidProgress = 0 ,-- 本周的世界任务（地下堡）完成度
             weekActivitiesProgress = 0, -- 本周地下城完成度
             weekWorldProgress = 0, -- 本周团本完成度
+            weekFirstLogin = nil,
             itemList = {
                 [123456] = { -- 物品ID
                     count = 1, -- 本周获取该物品的数量
@@ -66,23 +68,6 @@ function UpdateCharacterBunkerKeyCount()
     characterData.bunkerKeyCount = keyCount 
 end
 
-function UpdateInstanceStatusOld()
-    local characterData = GetCharacterData()
-    local trackedInstanceName = "阿梅达希尔，梦境之愿"
-
-    for i = 1, GetNumSavedInstances() do
-        local name, id, reset, locked = GetSavedInstanceInfo(i)
-        --DEFAULT_CHAT_FRAME:AddMessage("UpdateInstanceStatus exec..." .. tostring(reset) .. name .. characterData.name)
-        if name == trackedInstanceName then
-            characterData.instances[name] = characterData.instances[name] or {}
-            characterData.instances[name].locked = locked or false
-            if reset and reset > 0 then
-               characterData.instances[name].resetTime = GetServerTime() + reset
-            end
-        end
-    end
-end
-
 -- 更新周活跃数据（低保）
 function UpdateWeekActivitie()
     local character = GetCharacterData()
@@ -106,6 +91,7 @@ function UpdateInstanceStatus()
 
     for i = 1, GetNumSavedInstances() do
         local name, _, reset, locked = GetSavedInstanceInfo(i)
+        --DEFAULT_CHAT_FRAME:AddMessage("UpdateInstanceStatus exec..." .. tostring(reset) .. name .. characterData.name)
         if name and name == trackedInstanceName then
             local instanceData = characterData.instances[name]
             if reset and reset > 0 then
@@ -122,6 +108,7 @@ function UpdateInstanceStatus()
     end
 end
 
+-- 获取当前登录角色
 function GetCharacterData()
     local userKey = Utils.GetCharacterKey()
     local level = UnitLevel("player")
@@ -144,67 +131,51 @@ function GetCharacterData()
     return OwlSavedInstancesDB.characters[userKey]
 end
 
--- 重置所有角色的周数据
+-- 重置所有角色的周数据(哪个登录就重置哪个角色的数据)
 function ResetAllCharacters()
     for charKey, charData in pairs(OwlSavedInstancesDB.characters or {}) do
         ResetWeeklyData(charData)
     end
 end
 
+-- 周常（宝库）
 function ResetWeeklyData(character)
-    local currentWeekStart = Utils.GetCurrentWeekStart()
+    --DEFAULT_CHAT_FRAME:AddMessage("UpdateInstanceStatus exec..." ..(character.lastSeen - currentWeekStart).." name" .. character.name)
+    -- 注意！下面的数据重置必须要要先进行登录，否则不清理。
+    if Utils.IsUserNewWeekFirstLogin() then
+        local currentCharacter = GetCharacterData()
 
-    if character.lastSeen and character.lastSeen >= currentWeekStart then
-        --DEFAULT_CHAT_FRAME:AddMessage("ResetWeeklyData fail...")
-        return 
-    end
-
-    for instanceID, instanceData in pairs(character.instances or {}) do
-        if instanceData.resetTime and instanceData.resetTime <= time() then
-            if instanceData.resetTime and instanceData.resetTime <= time() then
-                instanceData.locked = false  
-                instanceData.resetTime = nil
-            end
+        if not currentCharacter then
+            return
         end
-    end
-    -- 注意！！！下面的数据重置必须要要先进行登录，否则不清理。
-    local currentCharacter = GetCharacterData()
-    --DEFAULT_CHAT_FRAME:AddMessage("准备清理宝库数据..."  .. currentCharacter.name )
-
-    if not currentCharacter then
-        return
-    end
-    -- 只能更新当前用户的
-    character.lastSeen = time()
-
-    -- 宝库-团本、五人本、世界任务、地下堡
-    character.weekRaidProgress = 0
-    character.weekActivitiesProgress = 0
-    character.weekWorldProgress = 0
-    DEFAULT_CHAT_FRAME:AddMessage("清理宝库数据完成..."  .. currentCharacter.name )
+        -- 宝库-团本、五人本、世界任务、地下堡
+        character.weekRaidProgress = 0
+        character.weekActivitiesProgress = 0
+        character.weekWorldProgress = 0
+    end 
 end
 
+-- 一周只能执行一次（任意一个角色即可触发）
 function ResetOwlInstance()
-    
-    local currentWeekStart = Utils.GetCurrentWeekStart()
-    
+    if not Utils.IsNewWeekFirstLogin() then
+        return
+    end 
     for _, charData in pairs(OwlSavedInstancesDB.characters or {}) do
-         if not charData.lastSeen or charData.lastSeen < currentWeekStart then
             if charData.instances then
                 for instanceID, instanceInfo in pairs(charData.instances) do
                     instanceInfo.locked = false
                     instanceInfo.resetTime = nil
                 end
             end
-        end
     end
+end
 
+-- 更新角色最后登陆时间
+function UpdateLastSeen() 
     local currentCharacter = GetCharacterData()
-    if not currentCharacter then
-        return
-    end
-    DEFAULT_CHAT_FRAME:AddMessage("角色最后更新时间..."  .. currentCharacter.name )
-    character.lastSeen = time()
+    currentCharacter.lastSeen = time()
+    -- local lastSeenText  = date("%Y-%m-%d %H:%M:%S", timestamp)
+    -- DEFAULT_CHAT_FRAME:AddMessage("最后上线: " .. lastSeenText)
 end
 
 -- 更新角色的宝匣钥匙数量 
